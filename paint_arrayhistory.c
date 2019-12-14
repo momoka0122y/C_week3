@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h> // for error catch
+#include <math.h>
 
 // Structure for canvas
 typedef struct
