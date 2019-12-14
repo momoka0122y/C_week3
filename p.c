@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include <errno.h> // for error catch
 
 // Structure for canvas
@@ -38,6 +39,7 @@ typedef enum res{ EXIT, NORMAL, COMMAND} Result;
 
 int max(const int a, const int b);
 void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1);
+void draw_circle(Canvas *c, const int x0, const int y0, const int r);
 Result interpret_command(const char *command, History *his, Canvas *c);
 void save_history(const char *filename, History *his);
 
@@ -191,6 +193,10 @@ int max(const int a, const int b)
 {
   return (a > b) ? a : b;
 }
+
+
+
+
 void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1)
 {
   const int width = c->width;
@@ -207,6 +213,32 @@ void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1
   }
   //printf("1 line drawn\n");
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void draw_circle(Canvas *c, const int x0, const int y0, const int r)
+{
+  const int width = c->width;
+  const int height = c->height;
+  char pen = c->pen;
+  
+  for (int x=0;x<width;x++){
+    for (int y=0 ; y<height;y++){
+      if ((int) sqrt((double)((x-x0)*(x-x0)+(y-y0)*(y-y0)))==r){
+        c->canvas[x][y] = pen;
+      }
+    }
+  }
+
+
+  //printf("1 line drawn\n");
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
 
 void save_history(const char *filename, History *his)
 {
@@ -257,7 +289,51 @@ Result interpret_command(const char *command, History *his, Canvas *c)
     printf("1 line drawn\n");
     return NORMAL;
   }
-  
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (strcmp(s, "circle") == 0) {
+    int x0, y0, r;
+    x0 = 0; y0 = 0; r=0; // initialize
+    char *b[3];
+    for (int i = 0 ; i < 3; i++){
+      b[i] = strtok(NULL, " ");
+      if (b[i] == NULL){
+        printf("the number of point is not enough.\n");
+        return COMMAND;
+      }
+    }
+    x0 = strtol(b[0],NULL,10);
+    y0 = strtol(b[1],NULL,10);
+    r = strtol(b[2],NULL,10);
+
+    draw_circle(c,x0, y0, r);
+    printf("1 circle drawn\n");
+    return NORMAL;
+  }
+
+    if (strcmp(s, "load") == 0) {
+       FILE *fp;
+       char str[1024];
+       fp = fopen("history.txt","r");
+
+       if(fp==NULL){
+         printf("ファイルオープン失敗\n");
+         return COMMAND;
+         }
+         char buf[10000];
+         int i=0;///////////////////////////
+         while (fgets(buf,10000, fp)) {
+           interpret_command(buf, his, c);
+           strcpy(his->commands[i], buf);///////あとで変更しろおおおおおお！！！！！
+           i++;///////////////////////////あとで変更しろおおおおおお！！！！！
+  }
+
+
+
+
+    }
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (strcmp(s, "save") == 0) {
     s = strtok(NULL, " ");
     save_history(s, his);
