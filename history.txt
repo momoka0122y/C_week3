@@ -1,2 +1,4 @@
-line 10 10 40 35
-line 10 10 20 45
+circle 20 20 8
+circle 30 20 17
+circle 40 20 8
+line 20 30 40 30 
