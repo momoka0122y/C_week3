@@ -304,6 +304,28 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
     draw_line(c,x0, y0, x1, y1);
     return NORMAL;
   }
+  if (strcmp(s, "square") == 0) {
+    int x0, y0, x1, y1;
+    x0 = 0; y0 = 0; x1 = 0; y1 = 0; // initialize
+    char *b[4];
+    for (int i = 0 ; i < 4; i++){
+      b[i] = strtok(NULL, " ");
+      if (b[i] == NULL){
+        printf("the number of point is not enough.\n");
+        return COMMAND;
+      }
+    }
+    x0 = strtol(b[0],NULL,10);
+    y0 = strtol(b[1],NULL,10);
+    x1 = strtol(b[2],NULL,10);
+    y1 = strtol(b[3],NULL,10);
+
+    draw_line(c,x0, y0, x0, y1);
+    draw_line(c,x0, y0, x1, y0);
+    draw_line(c,x1, y1, x0, y1);
+    draw_line(c,x1, y1, x1, y0);
+    return NORMAL;
+  }
   if (strcmp(s, "circle") == 0) {
     int x0, y0, r;
     x0 = 0; y0 = 0; r=0; // initialize
