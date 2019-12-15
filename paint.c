@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   //for history recording
   const int bufsize = 1000;
   History history = (History){.bufsize = bufsize, .hsize = 0 ,.begin=NULL};
-  History redo;
+  History redo= (History){.bufsize = bufsize, .hsize = 0 ,.begin=NULL};
 
 
   int width;
@@ -112,8 +112,11 @@ int main(int argc, char **argv)
       history.hsize++;
       
     }
-      for (const Command *p = history.begin; p != NULL; p = p->next) {
+    for (const Command *p = history.begin; p != NULL; p = p->next) {
     printf("%zu  %s",history.hsize, p->buf);
+  }
+  for (const Command *p = redo.begin; p != NULL; p = p->next) {
+    printf("\e[31m%zu           %s\e[0m",redo.hsize, p->buf);
   }
 
     rewind_screen(fp,2+history.hsize); // command results
@@ -251,8 +254,14 @@ void save_history(const char *filename, History *history)
 
 Result interpret_command(const char *command, History *his,History *redo, Canvas *c)
 {
+  
   char buf[his->bufsize];
   strcpy(buf, command);
+
+  if(strlen(buf)==0){
+    printf("error: unknown command.\n");
+    return COMMAND;
+  }
   buf[strlen(buf) - 1] = 0; // remove the newline character at the end
   const char *s = strtok(buf, " ");
 
@@ -276,7 +285,6 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
     y1 = strtol(b[3],NULL,10);
 
     draw_line(c,x0, y0, x1, y1);
-    printf("1 line drawn\n");
     return NORMAL;
   }
   
@@ -291,9 +299,13 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
     
     if (his->hsize != 0){
      reset_canvas(c); 
-     for (const Command *z = his->begin;  z->next != NULL; z = z->next){
-       push_front(redo, z->buf);
-     }
+
+    const Command *xxx=his->begin; 
+    while (xxx->next!=NULL ){
+      xxx=xxx->next;
+    }
+    push_front(redo, xxx->buf);
+
      pop_back(his);
      const Command *z = his->begin;
 
@@ -308,21 +320,16 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
   }
 
 if (strcmp(s, "redo") == 0) {
-  if(his->hsize != 0 && redo->begin != NULL){
+  if( redo->begin != NULL){
     push_back(his,redo->begin->buf);
     pop_front(redo);
     const Command *z = his->begin;
 
-    while (z->next != NULL) {
+    while (z != NULL) {
       interpret_command(z->buf, his,redo, c);
       z = z->next;
       }
       his->hsize++;
-
-
-
-
-
   }
   return COMMAND;
 }
