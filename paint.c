@@ -101,9 +101,8 @@ int main(int argc, char **argv)
     printf("%zu > ", hsize);
     fgets(buf, bufsize, stdin);
 
-    History *p =&history;
 
-    const Result r = interpret_command(buf, p,&redo,c);
+    const Result r = interpret_command(buf, &history,&redo,c);
     if (r == EXIT) break;
     if (r == NORMAL) {
 
@@ -117,7 +116,7 @@ int main(int argc, char **argv)
     printf("%zu  %s",history.hsize, p->buf);
   }
   for (const Command *p = redo.begin; p != NULL; p = p->next) {
-    printf("\e[31m%zu           %s\e[0m",redo.hsize, p->buf);
+    printf("\e[31m%zu %s\e[0m",redo.hsize, p->buf);
   }
 
     rewind_screen(fp,2+history.hsize); // command results
@@ -334,19 +333,39 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
          printf("ファイルオープン失敗\n");
          return COMMAND;
          }
+         reset_canvas(c); 
          char buf[10000];
          int i=0;///////////////////////////
          History load_history =(History){.bufsize = 1000, .hsize = 0 ,.begin=NULL};
          while (fgets(buf,10000, fp)) {
            interpret_command(buf, his,redo, c);
            push_back(&load_history,buf);
-  }
-
-
-
-
+           load_history.hsize++;
+         }
+         *his=load_history;
     }
   
+  if (strcmp(s, "doraemon") == 0) {
+       FILE *fp;
+       char str[1024];
+       fp = fopen("doraemon.txt","r");
+
+       if(fp==NULL){
+         printf("ファイルオープン失敗\n");
+         return COMMAND;
+         }
+         reset_canvas(c); 
+         char buf[10000];
+         int i=0;///////////////////////////
+         History load_history =(History){.bufsize = 1000, .hsize = 0 ,.begin=NULL};
+         while (fgets(buf,10000, fp)) {
+           interpret_command(buf, his,redo, c);
+           push_back(&load_history,buf);
+           load_history.hsize++;
+         }
+         *his=load_history;
+    }
+
   if (strcmp(s, "save") == 0) {
     s = strtok(NULL, " ");
     save_history(s, his);
