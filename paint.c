@@ -13,8 +13,9 @@ typedef struct
   int height;
   char **canvas;
   char pen;
+  int color;
 } Canvas;
-///////////////////////
+///////////////////////;
 
 typedef struct command{
   char *buf;
@@ -30,7 +31,7 @@ typedef struct{
 } History;
 
 // functions for Canvas type
-Canvas *init_canvas(int width, int height, char pen);
+Canvas *init_canvas(int width, int height, char pen,int color);
 void reset_canvas(Canvas *c);
 void print_canvas(FILE *fp, Canvas *c);
 void free_canvas(Canvas *c);
@@ -86,11 +87,12 @@ int main(int argc, char **argv)
     height = (int)h;    
   }
   char pen = '*';
+  int color =0;
 
   FILE *fp;
   char buf[history.bufsize];
   fp = stdout;
-  Canvas *c = init_canvas(width,height, pen);
+  Canvas *c = init_canvas(width,height, pen,color);
 
   fprintf(fp,"\n"); // required especially for windows env
   while (1) {
@@ -106,18 +108,15 @@ int main(int argc, char **argv)
     const Result r = interpret_command(buf, &history,&redo,c);
     if (r == EXIT) break;
     if (r == NORMAL) {
-
-
       push_back(&history, buf);
-
       history.hsize++;
-      
     }
-    for (const Command *p = history.begin; p != NULL; p = p->next) {
-    printf("%zu  %s",history.hsize, p->buf);
+    ////ただのデバグ
+    for (const Command *p = history.begin; p != NULL; p = p->next) {////ただのデバグ
+    printf("%zu  %s",history.hsize, p->buf);////ただのデバグ
   }
-  for (const Command *p = redo.begin; p != NULL; p = p->next) {
-    printf("\e[31m%zu %s\e[0m",redo.hsize, p->buf);
+  for (const Command *p = redo.begin; p != NULL; p = p->next) {////ただのデバグ
+    printf("\e[31m%zu %s\e[0m",redo.hsize, p->buf);////ただのデバグ
   }
 
     rewind_screen(fp,2+history.hsize); // command results
@@ -133,7 +132,7 @@ int main(int argc, char **argv)
   return 0;
 }
 
-Canvas *init_canvas(int width,int height, char pen)
+Canvas *init_canvas(int width,int height, char pen,int color)
 {
   Canvas *new = (Canvas *)malloc(sizeof(Canvas));
   new->width = width;
@@ -147,6 +146,7 @@ Canvas *init_canvas(int width,int height, char pen)
   }
   
   new->pen = pen;
+  new->color = color;
   return new;
 }
 
@@ -174,9 +174,9 @@ void print_canvas(FILE *fp, Canvas *c)
   for (int y = 0 ; y < height ; y++) {
     fprintf(fp,"|");
     for (int x = 0 ; x < width; x++){
-      const char c = canvas[x][y];
-      fputc(c, fp);
-    }
+      const char char_c = canvas[x][y];
+      fprintf(fp,"\e[%dm%c\e[0m",c->color, char_c);
+    } 
     fprintf(fp,"|\n");
   }
   
@@ -395,6 +395,35 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
   if (strcmp(s,"pen")==0){
     char *pen = strtok(NULL, " ");
     c->pen=*pen;
+    return NORMAL;
+  }
+
+  if (strcmp(s,"color")==0){
+    char *color_char = strtok(NULL, " ");
+
+    if(strcmp(color_char,"black")==0){
+      c->color=30;
+    }else if(strcmp(color_char,"red")==0){
+      c->color=31;
+    }else if(strcmp(color_char,"green")==0){
+      c->color=32;
+    }else if(strcmp(color_char,"yellow")==0){
+      c->color=33;
+    }else if(strcmp(color_char,"blue")==0){
+      c->color=34;
+    }else if(strcmp(color_char,"purple")==0){
+      c->color=35;
+    }else if(strcmp(color_char,"cyan")==0){
+      c->color=36;
+    }else if(strcmp(color_char,"white")==0){
+      c->color=37;
+    }
+
+    
+
+
+
+
     return NORMAL;
   }
   //ここまでNORMAL　保存されるコマンド
