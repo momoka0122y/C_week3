@@ -3,8 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h> // for error catch
-#include <math.h>//あとやること　名前をつけて保存。色を変える。ペン先を変える。←どっちもkコマンドNORMAL
-//fprintf(fp, "\e[91m#\e[0m"); で色変え
+#include <math.h>//あとやること　塗りつぶしの円。名前をつけて保存。色を変える。ペン先を変える。←どっちもkコマンドNORMAL
 
 // Structure for canvas
 typedef struct
@@ -247,23 +246,6 @@ void draw_circle(Canvas *c, const int x0, const int y0, const int r)
 
   //printf("1 line drawn\n");
 }
-void draw_inside_circle(Canvas *c, const int x0, const int y0, const int r)
-{
-  const int width = c->width;
-  const int height = c->height;
-  char pen = c->pen;
-
-  for (int x=0;x<width;x++){
-    for (int y=0 ; y<height;y++){
-      if ((int) sqrt((double)((x-x0)*(x-x0)+4*(y-y0)*(y-y0)))<=r){
-        c->canvas[x][y] = pen;
-      }
-    }
-  }
-
-
-  //printf("1 line drawn\n");
-}
 
 void save_history(const char *filename, History *history)
 {
@@ -287,14 +269,6 @@ void save_history(const char *filename, History *history)
   fclose(fp);
 }
 
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Result interpret_command(const char *command, History *his,History *redo, Canvas *c)
 {
   
@@ -372,34 +346,6 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
     return NORMAL;
   }
 
-    if (strcmp(s, "inside_circle") == 0) {
-    int x0, y0, r;
-    x0 = 0; y0 = 0; r=0; // initialize
-    char *b[5];
-    for (int i = 0 ; i < 3; i++){
-      b[i] = strtok(NULL, " ");
-      if (b[i] == NULL){
-        printf("the number of point is not enough.\n");
-        return COMMAND;
-      }
-    }
-    x0 = strtol(b[0],NULL,10);
-    y0 = strtol(b[1],NULL,10);
-    r = strtol(b[2],NULL,10);
-
-    draw_inside_circle(c,x0, y0, r);
-    printf("1 circle drawn\n");
-    return NORMAL;
-  }
-
-  if (strcmp(s,"pen")==0){
-    char *pen = strtok(NULL, " ");
-    c->pen=*pen;
-    return NORMAL;
-  }
-  //ここまでNORMAL　保存されるコマンド
-  /////////////////////////////////////////////////////
-
     if (strcmp(s, "load") == 0) {
        FILE *fp;
        char str[1024];
@@ -420,7 +366,6 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
            load_history.hsize++;
          }
          *his=load_history;
-         return COMMAND;
     }
   
   if (strcmp(s, "doraemon") == 0) {
@@ -442,7 +387,6 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
            load_history.hsize++;
          }
          *his=load_history;
-         return COMMAND;
     }
 
   if (strcmp(s, "save") == 0) {

@@ -3,8 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h> // for error catch
-#include <math.h>//あとやること　名前をつけて保存。色を変える。ペン先を変える。←どっちもkコマンドNORMAL
-//fprintf(fp, "\e[91m#\e[0m"); で色変え
+#include <math.h>
 
 // Structure for canvas
 typedef struct
@@ -45,7 +44,6 @@ typedef enum res{ EXIT, NORMAL, COMMAND} Result;
 
 int max(const int a, const int b);
 void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1);
-void draw_circle(Canvas *c, const int x0, const int y0, const int r);
 Result interpret_command(const char *command, History *his,History *redo, Canvas *c);
 void save_history(const char *filename, History *his);
 
@@ -102,8 +100,9 @@ int main(int argc, char **argv)
     printf("%zu > ", hsize);
     fgets(buf, bufsize, stdin);
 
+    History *p =&history;
 
-    const Result r = interpret_command(buf, &history,&redo,c);
+    const Result r = interpret_command(buf, p,&redo,c);
     if (r == EXIT) break;
     if (r == NORMAL) {
 
@@ -117,7 +116,7 @@ int main(int argc, char **argv)
     printf("%zu  %s",history.hsize, p->buf);
   }
   for (const Command *p = redo.begin; p != NULL; p = p->next) {
-    printf("\e[31m%zu %s\e[0m",redo.hsize, p->buf);
+    printf("\e[31m%zu           %s\e[0m",redo.hsize, p->buf);
   }
 
     rewind_screen(fp,2+history.hsize); // command results
@@ -230,40 +229,6 @@ void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1
   }
   //printf("1 line drawn\n");
 }
-void draw_circle(Canvas *c, const int x0, const int y0, const int r)
-{
-  const int width = c->width;
-  const int height = c->height;
-  char pen = c->pen;
-
-  for (int x=0;x<width;x++){
-    for (int y=0 ; y<height;y++){
-      if ((int) sqrt((double)((x-x0)*(x-x0)+4*(y-y0)*(y-y0)))==r){
-        c->canvas[x][y] = pen;
-      }
-    }
-  }
-
-
-  //printf("1 line drawn\n");
-}
-void draw_inside_circle(Canvas *c, const int x0, const int y0, const int r)
-{
-  const int width = c->width;
-  const int height = c->height;
-  char pen = c->pen;
-
-  for (int x=0;x<width;x++){
-    for (int y=0 ; y<height;y++){
-      if ((int) sqrt((double)((x-x0)*(x-x0)+4*(y-y0)*(y-y0)))<=r){
-        c->canvas[x][y] = pen;
-      }
-    }
-  }
-
-
-  //printf("1 line drawn\n");
-}
 
 void save_history(const char *filename, History *history)
 {
@@ -287,14 +252,6 @@ void save_history(const char *filename, History *history)
   fclose(fp);
 }
 
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Result interpret_command(const char *command, History *his,History *redo, Canvas *c)
 {
   
@@ -330,121 +287,7 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
     draw_line(c,x0, y0, x1, y1);
     return NORMAL;
   }
-  if (strcmp(s, "square") == 0) {
-    int x0, y0, x1, y1;
-    x0 = 0; y0 = 0; x1 = 0; y1 = 0; // initialize
-    char *b[4];
-    for (int i = 0 ; i < 4; i++){
-      b[i] = strtok(NULL, " ");
-      if (b[i] == NULL){
-        printf("the number of point is not enough.\n");
-        return COMMAND;
-      }
-    }
-    x0 = strtol(b[0],NULL,10);
-    y0 = strtol(b[1],NULL,10);
-    x1 = strtol(b[2],NULL,10);
-    y1 = strtol(b[3],NULL,10);
-
-    draw_line(c,x0, y0, x0, y1);
-    draw_line(c,x0, y0, x1, y0);
-    draw_line(c,x1, y1, x0, y1);
-    draw_line(c,x1, y1, x1, y0);
-    return NORMAL;
-  }
-  if (strcmp(s, "circle") == 0) {
-    int x0, y0, r;
-    x0 = 0; y0 = 0; r=0; // initialize
-    char *b[3];
-    for (int i = 0 ; i < 3; i++){
-      b[i] = strtok(NULL, " ");
-      if (b[i] == NULL){
-        printf("the number of point is not enough.\n");
-        return COMMAND;
-      }
-    }
-    x0 = strtol(b[0],NULL,10);
-    y0 = strtol(b[1],NULL,10);
-    r = strtol(b[2],NULL,10);
-
-    draw_circle(c,x0, y0, r);
-    printf("1 circle drawn\n");
-    return NORMAL;
-  }
-
-    if (strcmp(s, "inside_circle") == 0) {
-    int x0, y0, r;
-    x0 = 0; y0 = 0; r=0; // initialize
-    char *b[5];
-    for (int i = 0 ; i < 3; i++){
-      b[i] = strtok(NULL, " ");
-      if (b[i] == NULL){
-        printf("the number of point is not enough.\n");
-        return COMMAND;
-      }
-    }
-    x0 = strtol(b[0],NULL,10);
-    y0 = strtol(b[1],NULL,10);
-    r = strtol(b[2],NULL,10);
-
-    draw_inside_circle(c,x0, y0, r);
-    printf("1 circle drawn\n");
-    return NORMAL;
-  }
-
-  if (strcmp(s,"pen")==0){
-    char *pen = strtok(NULL, " ");
-    c->pen=*pen;
-    return NORMAL;
-  }
-  //ここまでNORMAL　保存されるコマンド
-  /////////////////////////////////////////////////////
-
-    if (strcmp(s, "load") == 0) {
-       FILE *fp;
-       char str[1024];
-
-       fp = fopen("history.txt","r");
-
-       if(fp==NULL){
-         printf("ファイルオープン失敗\n");
-         return COMMAND;
-         }
-         reset_canvas(c); 
-         char buf[10000];
-         int i=0;///////////////////////////
-         History load_history =(History){.bufsize = 1000, .hsize = 0 ,.begin=NULL};
-         while (fgets(buf,10000, fp)) {
-           interpret_command(buf, his,redo, c);
-           push_back(&load_history,buf);
-           load_history.hsize++;
-         }
-         *his=load_history;
-         return COMMAND;
-    }
   
-  if (strcmp(s, "doraemon") == 0) {
-       FILE *fp;
-       char str[1024];
-       fp = fopen("doraemon.txt","r");
-
-       if(fp==NULL){
-         printf("ファイルオープン失敗\n");
-         return COMMAND;
-         }
-         reset_canvas(c); 
-         char buf[10000];
-         int i=0;///////////////////////////
-         History load_history =(History){.bufsize = 1000, .hsize = 0 ,.begin=NULL};
-         while (fgets(buf,10000, fp)) {
-           interpret_command(buf, his,redo, c);
-           push_back(&load_history,buf);
-           load_history.hsize++;
-         }
-         *his=load_history;
-         return COMMAND;
-    }
-
   if (strcmp(s, "save") == 0) {
     s = strtok(NULL, " ");
     save_history(s, his);
@@ -515,12 +358,14 @@ void push_front(History *history, const char *str)
   Command *p = (Command *)malloc(sizeof(Command));
   char *s = (char *)malloc(strlen(str) + 1);
   strcpy(s, str); // 文字列をコピーする (str から s へ)
+
   // charポインタと次の行き先をメンバに持つ構造体とする
   Command *q = (Command*)malloc(sizeof(Command));
   *q = (Command){.buf = s, .next = history->begin};//一つ目でしか使わないからこの時.nextはNULLになる。
   history->begin = q;
  // Now the new element is the first element in the list
 }
+
 void push_back(History *history, const char *str)
 {
   // 現状、空の場合は後ろには追加できないので、前に追加する
@@ -541,6 +386,7 @@ void push_back(History *history, const char *str)
 
   //今回確保したものは末尾にあるので、nextがNULLをさすようにする
   *q = (Command){.buf =s, .next = NULL};
+
   // The new element should be linked from the previous last element
   // pからqにつなぐ
   p->next = q;
