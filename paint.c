@@ -463,7 +463,7 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
     }
 
     else if(strcmp(color_char,"all_white")==0){
-      c->color=107;
+      c->color=39;
     }else if(strcmp(color_char,"all_blue")==0){
       c->color=104;
     }else if(strcmp(color_char,"all_red")==0){
