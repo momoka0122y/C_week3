@@ -13,10 +13,8 @@ typedef struct
   int height;
   char **canvas;
   char pen;
-  int color;
-  int **color_canvas;
 } Canvas;
-///////////////////////;
+///////////////////////
 
 typedef struct command{
   char *buf;
@@ -32,7 +30,7 @@ typedef struct{
 } History;
 
 // functions for Canvas type
-Canvas *init_canvas(int width, int height, char pen,int color);
+Canvas *init_canvas(int width, int height, char pen);
 void reset_canvas(Canvas *c);
 void print_canvas(FILE *fp, Canvas *c);
 void free_canvas(Canvas *c);
@@ -88,12 +86,11 @@ int main(int argc, char **argv)
     height = (int)h;    
   }
   char pen = '*';
-  int color =30;
 
   FILE *fp;
   char buf[history.bufsize];
   fp = stdout;
-  Canvas *c = init_canvas(width,height, pen,color);
+  Canvas *c = init_canvas(width,height, pen);
 
   fprintf(fp,"\n"); // required especially for windows env
   while (1) {
@@ -109,15 +106,18 @@ int main(int argc, char **argv)
     const Result r = interpret_command(buf, &history,&redo,c);
     if (r == EXIT) break;
     if (r == NORMAL) {
+
+
       push_back(&history, buf);
+
       history.hsize++;
+      
     }
-    ////ただのデバグ
-    for (const Command *p = history.begin; p != NULL; p = p->next) {////ただのデバグ
-    printf("%zu  %s",history.hsize, p->buf);////ただのデバグ
+    for (const Command *p = history.begin; p != NULL; p = p->next) {
+    printf("%zu  %s",history.hsize, p->buf);
   }
-  for (const Command *p = redo.begin; p != NULL; p = p->next) {////ただのデバグ
-    printf("\e[31m%zu %s\e[0m",redo.hsize, p->buf);////ただのデバグ
+  for (const Command *p = redo.begin; p != NULL; p = p->next) {
+    printf("\e[31m%zu %s\e[0m",redo.hsize, p->buf);
   }
 
     rewind_screen(fp,2+history.hsize); // command results
@@ -133,9 +133,7 @@ int main(int argc, char **argv)
   return 0;
 }
 
-
-
-Canvas *init_canvas(int width,int height, char pen,int color)
+Canvas *init_canvas(int width,int height, char pen)
 {
   Canvas *new = (Canvas *)malloc(sizeof(Canvas));
   new->width = width;
@@ -147,16 +145,8 @@ Canvas *init_canvas(int width,int height, char pen,int color)
   for (int i = 0 ; i < width ; i++){
     new->canvas[i] = tmp + i * height;
   }
-  new->color_canvas = (int **)malloc(width * sizeof(int *));
-
-  int *tmptmp = (int *)malloc(width*height*sizeof(int));
-  memset(tmptmp, 30, width*height*sizeof(int));
-  for (int i = 0 ; i < width ; i++){
-    new->color_canvas[i] = tmptmp + i * height;
-  }
   
   new->pen = pen;
-  new->color = color;
   return new;
 }
 
@@ -166,12 +156,6 @@ void reset_canvas(Canvas *c)
   const int height = c->height;
   memset(c->canvas[0], ' ', width*height*sizeof(char));
 }
-void reset_color_canvas(Canvas *c)
-{
-  const int width = c->width;
-  const int height = c->height;
-  memset(c->color_canvas[0], 30, width*height*sizeof(int));
-}
 
 
 void print_canvas(FILE *fp, Canvas *c)
@@ -179,7 +163,6 @@ void print_canvas(FILE *fp, Canvas *c)
   const int height = c->height;
   const int width = c->width;
   char **canvas = c->canvas;
-  int **color_canvas =c->color_canvas;
   
   // 上の壁
   fprintf(fp,"+");
@@ -191,10 +174,9 @@ void print_canvas(FILE *fp, Canvas *c)
   for (int y = 0 ; y < height ; y++) {
     fprintf(fp,"|");
     for (int x = 0 ; x < width; x++){
-      const char char_c = canvas[x][y];
-      const int int_color_c =color_canvas[x][y];
-      fprintf(fp,"\e[%dm%c\e[0m",int_color_c, char_c);
-    } 
+      const char c = canvas[x][y];
+      fputc(c, fp);
+    }
     fprintf(fp,"|\n");
   }
   
@@ -210,8 +192,6 @@ void free_canvas(Canvas *c)
 {
   free(c->canvas[0]); //  for 2-D array free
   free(c->canvas);
-  free(c->color_canvas[0]); //  for 2-D array free
-  free(c->color_canvas);
   free(c);
 }
 
@@ -239,7 +219,6 @@ void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1
   const int width = c->width;
   const int height = c->height;
   char pen = c->pen;
-  int color =c->color;
   
   const int n = max(abs(x1 - x0), abs(y1 - y0));
   c->canvas[x0][y0] = pen;
@@ -248,7 +227,6 @@ void draw_line(Canvas *c, const int x0, const int y0, const int x1, const int y1
     const int y = y0 + i * (y1 - y0) / n;
     if ( (x >= 0) && (x< width) && (y >= 0) && (y < height))
       c->canvas[x][y] = pen;
-      c->color_canvas[x][y] = color;
   }
   //printf("1 line drawn\n");
 }
@@ -257,13 +235,11 @@ void draw_circle(Canvas *c, const int x0, const int y0, const int r)
   const int width = c->width;
   const int height = c->height;
   char pen = c->pen;
-  int color =c->color;
 
   for (int x=0;x<width;x++){
     for (int y=0 ; y<height;y++){
       if ((int) sqrt((double)((x-x0)*(x-x0)+4*(y-y0)*(y-y0)))==r){
         c->canvas[x][y] = pen;
-        c->color_canvas[x][y] = color;
       }
     }
   }
@@ -276,13 +252,11 @@ void draw_inside_circle(Canvas *c, const int x0, const int y0, const int r)
   const int width = c->width;
   const int height = c->height;
   char pen = c->pen;
-  int color =c->color;
 
   for (int x=0;x<width;x++){
     for (int y=0 ; y<height;y++){
       if ((int) sqrt((double)((x-x0)*(x-x0)+4*(y-y0)*(y-y0)))<=r){
         c->canvas[x][y] = pen;
-        c->color_canvas[x][y] = color;
       }
     }
   }
@@ -423,64 +397,6 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
     c->pen=*pen;
     return NORMAL;
   }
-
-  if (strcmp(s,"color")==0){
-    char *color_char = strtok(NULL, " ");
-
-    if(strcmp(color_char,"black")==0){
-      c->color=30;
-    }else if(strcmp(color_char,"red")==0){
-      c->color=31;
-    }else if(strcmp(color_char,"green")==0){
-      c->color=32;
-    }else if(strcmp(color_char,"yellow")==0){
-      c->color=33;
-    }else if(strcmp(color_char,"blue")==0){
-      c->color=34;
-    }else if(strcmp(color_char,"purple")==0){
-      c->color=35;
-    }else if(strcmp(color_char,"cyan")==0){
-      c->color=36;
-    }else if(strcmp(color_char,"light_gray")==0){
-      c->color=37;
-    }
-    else if(strcmp(color_char,"light_gray")==0){
-      c->color=90;
-    }else if(strcmp(color_char,"light_red")==0){
-      c->color=91;
-    }else if(strcmp(color_char,"light_green")==0){
-      c->color=92;
-    }else if(strcmp(color_char,"light_yellow")==0){
-      c->color=93;
-    }else if(strcmp(color_char,"light_blue")==0){
-      c->color=94;
-    }else if(strcmp(color_char,"light_purple")==0){
-      c->color=95;
-    }else if(strcmp(color_char,"light_cyan")==0){
-      c->color=96;
-    }else if(strcmp(color_char,"white")==0){
-      c->color=97;
-    }
-
-    else if(strcmp(color_char,"all_white")==0){
-      c->color=107;
-    }else if(strcmp(color_char,"all_blue")==0){
-      c->color=104;
-    }else if(strcmp(color_char,"all_red")==0){
-      c->color=101;
-    }else if(strcmp(color_char,"all_yellow")==0){
-      c->color=103;
-    }else if(strcmp(color_char,"all_black")==0){
-      c->color=40;
-    }
-
-    
-
-
-
-
-    return NORMAL;
-  }
   //ここまでNORMAL　保存されるコマンド
   /////////////////////////////////////////////////////
 
@@ -511,28 +427,6 @@ Result interpret_command(const char *command, History *his,History *redo, Canvas
        FILE *fp;
        char str[1024];
        fp = fopen("doraemon.txt","r");
-
-       if(fp==NULL){
-         printf("ファイルオープン失敗\n");
-         return COMMAND;
-         }
-         reset_canvas(c); 
-         char buf[10000];
-         int i=0;///////////////////////////
-         History load_history =(History){.bufsize = 1000, .hsize = 0 ,.begin=NULL};
-         while (fgets(buf,10000, fp)) {
-           interpret_command(buf, his,redo, c);
-           push_back(&load_history,buf);
-           load_history.hsize++;
-         }
-         *his=load_history;
-         return COMMAND;
-    }
-
-  if (strcmp(s, "colored_doraemon") == 0) {
-       FILE *fp;
-       char str[1024];
-       fp = fopen("colored_doraemon.txt","r");
 
        if(fp==NULL){
          printf("ファイルオープン失敗\n");

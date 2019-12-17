@@ -1,18 +1,24 @@
-circle 30 20 8
+pen .
+color all_blue
+inside_circle 38 28 30
+color all_white
+inside_circle 38 31 24
+inside_circle 30 20 8
+inside_circle 46 20 8
+color all_black
 circle 46 20 8
-circle 38 28 30
+circle 30 20 8
+inside_circle 34 20 2
+inside_circle 42 20 2
+color all_red
+inside_circle 38 24 3
+color all_black
 circle 38 24 3
-circle 38 24 2
-circle 38 24 1
 line 38 24 38 30
 line 28 30 48 30
-circle 30 20 3
-circle 30 20 2
-circle 46 20 3
-circle 46 20 2
-circle 46 20 1
-circle 30 20 1
-circle 38 31 24
-circle 38 40 3
-circle 38 40 4
-line 20 39 56 39
+color all_red
+line 18 39 58 39
+color all_yellow
+inside_circle 38 40 4
+color all_red
+inside_circle 38 24 3
