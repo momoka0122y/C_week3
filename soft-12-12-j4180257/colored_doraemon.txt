@@ -1,0 +1,24 @@
+pen *
+color blue
+inside_circle 38 28 30
+color white
+inside_circle 38 31 24
+inside_circle 30 20 8
+inside_circle 46 20 8
+color black
+circle 46 20 8
+circle 30 20 8
+inside_circle 35 20 2
+inside_circle 41 20 2
+color red
+inside_circle 38 24 3
+color black
+circle 38 24 3
+line 38 24 38 30
+line 28 30 48 30
+color red
+line 18 39 58 39
+color light_yellow
+inside_circle 38 40 4
+color red
+inside_circle 38 24 3
